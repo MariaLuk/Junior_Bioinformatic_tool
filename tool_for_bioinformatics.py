@@ -135,7 +135,3 @@ def fastq_filtration(seqs, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32), quali
     good_seqs = ff.filter_length(ff.filter_quality(ff.filter_gc(seqs, gc_bounds_both_side), quality_treshold),
                                  length_bounds_both_side)
     return good_seqs
-
-
-res = amino_acid_tools('DNA', 'ussc', 'LOLkEk', 'alal', 'seq_charge')
-print(res)
