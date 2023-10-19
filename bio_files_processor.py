@@ -43,7 +43,6 @@ def change_fasta_start_pos(input_fasta, n: int, output_fasta=''):
     :param input_fasta: data for processing (1-string single fasta)
     :param n: position of new start nucleotide (started with 0)
     :param output_fasta: name for output fasta file
-    :return:
     """
     if not os.path.isdir('shifted_fasta_results'):
         os.mkdir('shifted_fasta_results')
