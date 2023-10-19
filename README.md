@@ -1,4 +1,10 @@
 ﻿# My junior biochemical tool
+This package consists of 2 mini-tools
+`tools_for_bioinformatics` designed to work with nucleotide and amino acid sequences and FASTQ files
+`bio_files_processor` provides opportunity to  manipulate with FASTA files  
+
+
+# My junior biochemical tool
 This package for junior bioinformaticians is designed to work with nucleotide and amino acid sequences and FASTQ files, and consists of three parts. Each module `amino_acid_tools`, `dna_rna_tools` and `fastq_filtration` presents its own possibilities for sequence processing.  
  
 # `amino_acids_tools`
@@ -138,15 +144,16 @@ Output: 'AaGC'
 This function provides you the opportunity to filter the FASTQ list to select sequences according to requirements on three parameters: length, GC composition, and quality of the reed
 
 ### Usage
-It is required to input the list of sequences in dictionary format, as well as values for filtering parameters: interval by GC-composition, interval by sequence length, threshold value of average quality of reed
-Input example:
+It is required to input the list of sequences in dictionary format, as well as values for filtering parameters: interval by GC-composition, interval by sequence length, threshold value of average quality of reed. You also need input file and output file name (optional)
+ **input_fastq:**  FASTQ file
+**output_fastq**  name of output file,  you can find it in fastq_filtrator_resuls directory, if name is not defined, it will be the same of the input file in `fastq_filtration_result` directory
+        
 ```Python
-fastq_filtration(seqs, gc_bounds=(20, 40), length_bounds=(0, 2 *8), quality_treshold=10)
+fastq_filtration('example_fastq.fastq', , gc_bounds=(20, 40), length_bounds=(0, 2 *8), quality_treshold=10, 'outfastq_gc' )
 ```
 
 ####  Filtering parameters
 
- - seqs: dictionary of FASTQ sequences *{name: (sequence, quality)}*
  - **gc_bounds:**  interval for the of acceptable GC content, in %, *Default
    value = (0,100)*
  - **length_bounds**:  interval for the of acceptable sequense length in
@@ -156,41 +163,99 @@ fastq_filtration(seqs, gc_bounds=(20, 40), length_bounds=(0, 2 *8), quality_tres
 
  
 ### Result:
-New dictionary consists of selected sequences after 3-step filtration
+New FASTQ file consists of selected sequences after 3-step filtration
 #### Remarks
 After running without specifying the filtering parameters, all sequences will be be selected as appropriate
 You also can specify only the upper limit for GC-content and length filtering
 
 ### Examples
+```Python
+fastq_filtration('example_fastq.fastq', gc_bounds= (80, 100))
+```
+@SRX079804:1:SRR292678:1:1101:1120907:1120907 1:N:0:1 BH:ok
+CATGGTGGCG
++SRX079804:1:SRR292678:1:1101:1120907:1120907 1:N:0:1 BH:ok
+HHHHHFHHGG
+@SRX079804:1:SRR292678:1:1101:1175112:1175112 1:N:0:1 BH:failed
+AGGCC
++SRX079804:1:SRR292678:1:1101:1175112:1175112 1:N:0:1 BH:failed
+EC8EE
+@SRX079804:1:SRR292678:1:1101:1269735:1269735 1:N:0:1 BH:failed
+C
++SRX079804:1:SRR292678:1:1101:1269735:1269735 1:N:0:1 BH:failed
+G
+```Python
+fastq_filtration('example_fastq.fastq', length_bounds= (8, 12),output_fastq = 'outfastq_length')
+```
+@SRX079804:1:SRR292678:1:1101:1119783:1119783 1:N:0:1 BH:failed
+TGTTGTGTCAAG
++SRX079804:1:SRR292678:1:1101:1119783:1119783 1:N:0:1 BH:failed
+C@ABABEEEEAC
+@SRX079804:1:SRR292678:1:1101:1120614:1120614 1:N:0:1 BH:failed
+TGCTTTGCTTT
++SRX079804:1:SRR292678:1:1101:1120614:1120614 1:N:0:1 BH:failed
+DFDD8FE@FFE
+@SRX079804:1:SRR292678:1:1101:1120907:1120907 1:N:0:1 BH:ok
+CATGGTGGCG
++SRX079804:1:SRR292678:1:1101:1120907:1120907 1:N:0:1 BH:ok
+HHHHHFHHGG
+@SRX079804:1:SRR292678:1:1101:1130921:1130921 1:N:0:1 BH:failed
+AAGGGTCGA
++SRX079804:1:SRR292678:1:1101:1130921:1130921 1:N:0:1 BH:failed
+D@CDDBEEB
+@SRX079804:1:SRR292678:1:1101:1156698:1156698 1:N:0:1 BH:failed
+GAAAGAAC
++SRX079804:1:SRR292678:1:1101:1156698:1156698 1:N:0:1 BH:failed
+E=FFFFFF
+```Python
+fastq_filtration('example_fastq.fastq')
+```
+input file (no filtratation with default parameters)
+```Python
+fastq_filtration('example_fastq.fastq', gc_bounds=(100, 100), length_bounds=(0, 0 ), quality_treshold=0, output_fastq = 'outfastq_none')
+```
+empty file
 
-```Python
-d = {'a': ('atcaaa', '@@@@@@'), 'b': ('gcc', '@@!'), 'c': ('ga', '!!'), 'd': ('ga', '@@')}
-```
-```Python
-fastq_filtration(d) 
-```
-Output: {'a': ('atcaaa', '@@@@@@'), 'b': ('gcc', '@@!'), 'c': ('ga', '!!'), 'd': ('ga', '@@')}
-No filtration with default values
 
-```Python
-fastq_filtration(d, 40, (0, 3), 10)
-```
-Output: {}
+# `bio_files_processor` 
 
-```Python
-fastq_filtration(d, 50, (0, 7), 10)
-```
-Output: {'a': ('atcaaa', '@@@@@@'), 'd': ('ga', '@@')}
+works with FASTA files, provides 2 functions
 
+## `convert_multiline_fasta_to_oneline
+This function covert multiple string FASTA-file to one-long-string format
+
+ - **input_fasta**:  path to the FASTA file
+ - **output_fasta**: name for output FASTA-file, if not defined it will be saved to the directory `Result` as  `'Result'/input_fasta`
+
+Example input:
 ```Python
-fastq_filtration(d, 50, (0, 7), 0)
+convert_multiline_fasta_to_oneline('example_multiline_fasta.fasta', 'output2'): 
 ```
-Output: {'a': ('atcaaa', '@@@@@@'), 'c': ('ga', '!!'), 'd': ('ga', '@@')}
+
+## `change_fasta_start_pos`
+
+ 
+This function moves the position to a new starting nucleotide and needs 3 parameters
+
+ - **input_fasta:** data for processing (1-string single fasta)  
+ - **n:** position of new start nucleotide (started with 0)
+ -  **output_fasta:** name for output fasta file
+
+   
+  
+Example input:
+```Python 
+change_fasta_start_pos('example_fasta.fasta', 3, 'output2'): 
+```
+
+Examples:
+ACTGGA   initial sequence
+TGGAAC  n =2
+AACTGG  n =-1
+AACTGG  n = 5
+
 
 
 ##### Contacts
 Maria Lukina
 maria.v.luk@gmail.com
-
-
-
