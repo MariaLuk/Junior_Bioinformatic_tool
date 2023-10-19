@@ -1,3 +1,5 @@
+from typing import Union
+import os
 import modules.nucleic_acids_functions as na
 import modules.fastq_filters as ff
 import modules.amino_acids_functions as aa
@@ -7,7 +9,7 @@ AMINO_ACIDS = {'M', 'O', 'v', 'D', 'f', 'N', 'c', 'A', 'R', 'W', 'I', 'm', 'L', 
                'p', 'T', 'C', 'a'}
 
 
-def dna_rna_tools(*args: str):
+def dna_rna_tools(*args: str) -> str | list:
     """
         Performs functions for working with poly- and oligonucleotide sequences.
 
@@ -60,7 +62,7 @@ def dna_rna_tools(*args: str):
     return result
 
 
-def amino_acid_tools(*args: str):
+def amino_acid_tools(*args: str) -> list | int | float | str :
     """
     Performs functions for working with protein sequences.
 
@@ -113,17 +115,28 @@ def amino_acid_tools(*args: str):
         return answer
 
 
-def fastq_filtration(seqs, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32), quality_treshold=0) -> dict:
+def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32), quality_treshold=0, output_fastq=''):
     """
-    This function provides you the opportunity to filter the FASTQ list to select sequences
-    that fit  requirements on three parameters: length, GC composition, and quality of the reed
+    This function provides you the opportunity to filter the FASTQ file to select sequences
+    that fit  requirements on 5 parameters: input and output(optional) files, length, GC composition,
+    and quality of the reed
     :parameters
+        input_fastq: path to fastq file
         seqs: (dict) dictionary of FASTQ sequences {name: (sequence, quality)}
-        gc_bounds: (tuple or  or float) interval for the of acceptable GC content, in %
-        length_bounds: (tuple or int) interval for the of acceptable sequence length in number of nucleotide
+        gc_bounds: (tuple) interval for the of acceptable GC content, in %
+        length_bounds: (tuple) interval for the of acceptable sequense length in number of nucleotide
         quality_treshold: (float) threshold value for average quality per nucleotide (phred33 scale)
-    :return: (dict) new dictionary consists of selected sequences after 3-step filtration
+        output_fastq = name of output file, ./fastq_filtrator_resuls/output_fastq, if it is not defined,
+        it will be the same of the input file
+
     """
+    if not os.path.isdir('fastq_filtrator_resuls'):
+        os.mkdir('fastq_filtrator_resuls')
+    if output_fastq == '':
+        output_fastq = os.path.join('fastq_filtrator_resuls', os.path.basename(input_fastq))
+    else:
+        output_fastq = os.path.join('fastq_filtrator_resuls', output_fastq + ".fasta")
+    seqs  = convert_fastq_to_dict(input_fastq)
     if type(gc_bounds) == float or type(gc_bounds) == int:
         gc_bounds_both_side = (0, gc_bounds)
     else:
@@ -132,6 +145,9 @@ def fastq_filtration(seqs, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32), quali
         length_bounds_both_side = (0, length_bounds)
     else:
         length_bounds_both_side = length_bounds
-    good_seqs = ff.filter_length(ff.filter_quality(ff.filter_gc(seqs, gc_bounds_both_side), quality_treshold),
-                                 length_bounds_both_side)
+    good_seqs = filter_length(filter_quality(filter_gc(seqs, gc_bounds_both_side), quality_treshold),
+                              length_bounds_both_side)
+
+    write_dict_file_to_fastq(good_seqs, output_fastq)
     return good_seqs
+
