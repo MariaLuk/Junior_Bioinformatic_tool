@@ -122,7 +122,6 @@ def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32)
     and quality of the reed
     :parameters
         input_fastq: path to fastq file
-        seqs: (dict) dictionary of FASTQ sequences {name: (sequence, quality)}
         gc_bounds: (tuple) interval for the of acceptable GC content, in %
         length_bounds: (tuple) interval for the of acceptable sequense length in number of nucleotide
         quality_treshold: (float) threshold value for average quality per nucleotide (phred33 scale)
