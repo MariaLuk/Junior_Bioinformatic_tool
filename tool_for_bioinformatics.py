@@ -135,7 +135,7 @@ def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32)
         output_fastq = os.path.join('fastq_filtrator_resuls', os.path.basename(input_fastq))
     else:
         output_fastq = os.path.join('fastq_filtrator_resuls', output_fastq + ".fasta")
-    seqs  = convert_fastq_to_dict(input_fastq)
+    seqs = ff.convert_fastq_to_dict(input_fastq)
     if type(gc_bounds) == float or type(gc_bounds) == int:
         gc_bounds_both_side = (0, gc_bounds)
     else:
@@ -144,9 +144,10 @@ def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32)
         length_bounds_both_side = (0, length_bounds)
     else:
         length_bounds_both_side = length_bounds
-    good_seqs = filter_length(filter_quality(filter_gc(seqs, gc_bounds_both_side), quality_treshold),
+    good_seqs = ff.filter_length(ff.filter_quality(ff.filter_gc(seqs, gc_bounds_both_side), quality_treshold),
                               length_bounds_both_side)
 
-    write_dict_file_to_fastq(good_seqs, output_fastq)
+    ff.write_dict_file_to_fastq(good_seqs, output_fastq)
     return good_seqs
+
 
