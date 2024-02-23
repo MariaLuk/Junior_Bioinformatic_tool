@@ -1,8 +1,10 @@
-from typing import Union
 import os
 import modules.nucleic_acids_functions as na
-import modules.fastq_filters as ff
 import modules.amino_acids_functions as aa
+from Bio import SeqIO
+from Bio import SeqUtils
+
+
 NUCLEOTIDES = {'U', 'A', 'g', 't', 'G', 'T', 'a', 'c', 'C', 'u'}
 AMINO_ACIDS = {'M', 'O', 'v', 'D', 'f', 'N', 'c', 'A', 'R', 'W', 'I', 'm', 'L', 's', 'H', 'q', 'w', 'V', 'n', 'i',
                'g', 'F', 'S', 'e', 'l', 'U', 'P', 'Q', 'K', 'Y', 'u', 'y', 'd', 'h', 'k', 'r', 't', 'G', 'o', 'E',
@@ -115,6 +117,56 @@ def amino_acid_tools(*args: str) -> list | int | float | str :
         return answer
 
 
+def filter_gc(records, gc_bounds_both_side=(0, 100)) -> list:
+    """
+    This function selects sequences with the GC content of your interest
+    :parameters:
+        records: records from fastq parced by SeqIO
+        gc_bound: interval for the of acceptable GC content, in %
+    :return:(dict) new dictionary consists of selected sequences
+    """
+    new_records = []
+    for record in records:
+        if (gc_bounds_both_side[1]/100  >= SeqUtils.gc_fraction(record.seq) >= gc_bounds_both_side[0]/100):
+            new_records.append(record)
+
+    return new_records
+
+
+
+def filter_length(records, length_bounds_both_side=(0, 2 ** 32)) -> list:
+    """
+    This function selects sequences with the length of your interest
+    :parameters:
+        records: records from fastq parced by SeqIO
+        length_bound: interval for the of acceptable sequense length in number of nucleotide
+    :return:(dict) new dictionary consists of selected sequences
+    """
+    new_records = []
+    for record in records:
+        if (length_bounds_both_side[1] >= len(record.seq) >= length_bounds_both_side[0]):
+            new_records.append(record)
+    print(new_records)
+    return new_records
+
+
+
+def filter_quality(records, quality_threshold=0) -> list:
+    """
+    This function selects  FASTQ sequences with appropriate average nucleotide read quality
+    parameters:
+        seqs: dictionary of FASTQ sequences {name: (sequence, quality)}
+        quality_treshold: threshold value for average quality per nucleotide (phred33 scale)
+    :return:(dict) recordes for selected sequences
+    """
+    new_records = []
+    for record in records:
+        if (sum(record.letter_annotations["phred_quality"])/len(record.seq) >= quality_threshold):
+            new_records.append(record)
+    print(new_records)
+    return new_records
+
+
 def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32), quality_treshold=0, output_fastq=''):
     """
     This function provides you the opportunity to filter the FASTQ file to select sequences
@@ -135,7 +187,6 @@ def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32)
         output_fastq = os.path.join('fastq_filtrator_resuls', os.path.basename(input_fastq))
     else:
         output_fastq = os.path.join('fastq_filtrator_resuls', output_fastq + ".fasta")
-    seqs = ff.convert_fastq_to_dict(input_fastq)
     if type(gc_bounds) == float or type(gc_bounds) == int:
         gc_bounds_both_side = (0, gc_bounds)
     else:
@@ -144,10 +195,11 @@ def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32)
         length_bounds_both_side = (0, length_bounds)
     else:
         length_bounds_both_side = length_bounds
-    good_seqs = ff.filter_length(ff.filter_quality(ff.filter_gc(seqs, gc_bounds_both_side), quality_treshold),
-                              length_bounds_both_side)
+    records = list(SeqIO.parse(input_fastq, "fastq"))
+    filtered_records_l = filter_length(records, length_bounds_both_side)
+    filtered_records_gc = filter_gc(filtered_records_l, gc_bounds_both_side)
+    filtered_records_q = filter_quality(filtered_records_gc, quality_treshold)
+    SeqIO.write((record for record in filtered_records_q), output_fastq, "fastq")
+    return
 
-    ff.write_dict_file_to_fastq(good_seqs, output_fastq)
-    return good_seqs
-
-fastq_filtration('example_fastq.fastq', gc_bounds=(20, 80), length_bounds=140, quality_treshold=38, output_fastq='')
+#fastq_filtration('example_fastq.fastq', length_bounds= (10, 30), gc_bounds=(20, 30), output_fastq='')
