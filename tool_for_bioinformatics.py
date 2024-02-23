@@ -150,4 +150,4 @@ def fastq_filtration(input_fastq, gc_bounds=(0, 100), length_bounds=(0, 2 ** 32)
     ff.write_dict_file_to_fastq(good_seqs, output_fastq)
     return good_seqs
 
-
+fastq_filtration('example_fastq.fastq', gc_bounds=(20, 80), length_bounds=140, quality_treshold=38, output_fastq='')

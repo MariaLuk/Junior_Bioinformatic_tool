@@ -25,7 +25,7 @@ def filter_gc(seqs: dict, gc_bounds_both_side=(0, 100)) -> dict:
     d_new = {}
     for key, params in seqs.items():
         if gc_bounds_both_side[1] >= gc_content(params[0]) >= gc_bounds_both_side[0]:
-            d_new[key] = (params[0], params[1])
+            d_new[key] = (params[0], params[1], params[2])
     return d_new
 
 
@@ -40,7 +40,7 @@ def filter_length(seqs: dict, length_bounds_both_side=(0, 2 ** 32)) -> dict:
     d_new = {}
     for key, params in seqs.items():
         if length_bounds_both_side[1] >= len(params[0]) >= length_bounds_both_side[0]:
-            d_new[key] = (params[0], params[1])
+            d_new[key] = (params[0], params[1], params[2])
     return d_new
 
 
@@ -55,10 +55,10 @@ def filter_quality(seqs: dict, quality_treshold=0) -> dict:
     d_new = {}
     for key, params in seqs.items():
         quality_sum = 0
-        for n in params[1]:
+        for n in params[2]:
             quality_sum += ord(n) - 33
-        if quality_sum / len(params[1]) >= quality_treshold:
-            d_new[key] = (params[0], params[1])
+        if quality_sum / len(params[2]) >= quality_treshold:
+            d_new[key] = (params[0], params[1], params[2])
     return d_new
 
 
