@@ -1,122 +1,108 @@
 import os
-import modules.nucleic_acids_functions as na
-import modules.amino_acids_functions as aa
+from abc import ABC, abstractmethod
 from Bio import SeqIO
 from Bio import SeqUtils
 
 
-NUCLEOTIDES = {'U', 'A', 'g', 't', 'G', 'T', 'a', 'c', 'C', 'u'}
-AMINO_ACIDS = {'M', 'O', 'v', 'D', 'f', 'N', 'c', 'A', 'R', 'W', 'I', 'm', 'L', 's', 'H', 'q', 'w', 'V', 'n', 'i',
-               'g', 'F', 'S', 'e', 'l', 'U', 'P', 'Q', 'K', 'Y', 'u', 'y', 'd', 'h', 'k', 'r', 't', 'G', 'o', 'E',
-               'p', 'T', 'C', 'a'}
+class BiologicalSequence(ABC, str):
+
+    def __init__(self, seq):
+        self.seq = seq
+
+    #да, Никита уже сказал, что так лучше не делать, а оставить сдесь только абстрактные методы,
+    # но я зацепилась за идею не повторять проверки, раз суть для всех одна, только алфавиты разные,
+    # а переделать уже не успеваю
+    def check_alphabet(self):
+        if set(self.seq) <= self.alphabet:
+            raise UnexpectedSymbolInSeqError
+
+    # не поняла, не доделала
+    @abstractmethod
+    def to_print_seq(self):
+        return self.seq
+        pass
 
 
-def dna_rna_tools(*args: str) -> str | list:
-    """
-        Performs functions for working with poly- and oligonucleotide sequences.
+class UnexpectedSymbolInSeqError(ValueError):
+    pass
 
-        Parameters:
-            The function must accept a number of nucleotide sequences (str) as input,
-            the last  variable must be the function (str) you want to execute.
-            The nucleotide sequence can consist of both uppercase and lowercase letters.
-        Input example:
-            dna_rna_tools('GCGGT','auccuc','GCTatGc','complement')
-        Function:
-            complement: makes complement sequence to seq
-            reverse: reverses sequence, (from 5'-3' to 3' -5' there or back)
-            reverse_complement: makes complement sequence and reverse it
-            transcribe: make transcript of DNA sequence. in the case of RNA sequence, no changes will be returned
+
+class AminoAcidSequence(BiologicalSequence):
+    alphabet = {'M', 'O', 'v', 'D', 'f', 'N', 'c', 'A', 'R', 'W', 'I', 'm', 'L', 's', 'H', 'q', 'w', 'V', 'n', 'i',
+                   'g', 'F', 'S', 'e', 'l', 'U', 'P', 'Q', 'K', 'Y', 'u', 'y', 'd', 'h', 'k', 'r', 't', 'G', 'o', 'E',
+                   'p', 'T', 'C', 'a'}
+    masses = {'A': 71.08, 'R': 156.2, 'N': 114.1, 'D': 115.1, 'C': 103.1, 'E': 129.1, 'Q': 128.1, 'G': 57.05, 'H': 137.1,
+              'I': 113.2, 'L': 113.2, 'K': 128.2, 'M': 131.2, 'F': 147.2, 'P': 97.12, 'S': 87.08, 'T': 101.1,
+              'W': 186.2, 'Y': 163.2, 'V': 99.13, 'U': 168.05, 'O': 255.3, 'a': 71.08, 'r': 156.2, 'n': 114.1, 'd': 115.1,
+              'c': 103.1, 'e': 129.1, 'q': 128.1, 'g': 57.05, 'h': 137.1, 'i': 113.2, 'l': 113.2, 'k': 128.2, 'm': 131.2,
+              'f': 147.2, 'p': 97.12, 's': 87.08, 't': 101.1, 'w': 186.2, 'y': 163.2, 'v': 99.13, 'u': 168.05, 'o': 255.3}
+
+    def __init__(self, seq):
+        super().__init__(seq)
+        self.seq = seq
+        self.check_alphabet()
+    def molecular_weight(self) -> float:
+        """
+        Function calculates molecular weight of the amino acid chain
+        Input Parameters:
+               each letter refers to one-letter coded proteinogenic amino acids
         Returns:
-            If one sequence is supplied, a string with the result is returned.
-            If several are submitted, a list of strings is returned.
-            Depending on the function performed, the following returns will occur:
-            complement: (str) or (list) complement sequence to seq
-            reverse: (str) or (list) reversed sequence to seq
-            reverse_complement: (str) or (list) complement and reversed sequence
-            transcribe (str) or (list): transcript of DNA sequence.
-                                        in the case of RNA sequence, no changes will be returned,
-            If seq contains both U(u) and T(t) the result for this str will be
-            "U and T in one seq" regardless of function
-            If seq contains symbols differ from standardized oligonucleotide notation, the result will be
-            'unexpected symbols in sequence' regardless of function
-            If action is not in the function the message 'unexpected action' will occur
-    """
-    *seqs, action = args
-    result = list()
-    for seq in seqs:
-        if not set(seq).issubset(NUCLEOTIDES):
-            result.append('unexpected symbols in sequence')
-        elif (('U' in seq) or ('u' in seq)) and (('T' in seq) or ('t' in seq)):
-            result.append('T and U in one seq')
-        else:
-            if action == 'reverse':
-                result.append(na.reverse(seq))
-            elif action == 'complement':
-                result.append(na.complement(seq))
-            elif action == 'transcribe':
-                result.append(na.transcribe(seq))
-            elif action == 'reverse_complement':
-                result.append(na.reverse_complement(seq))
-            else:
-                raise ValueError("unexpected action")
-    if len(result) == 1:
-        result = result[0]
-    return result
+            (float) Molecular weight of tge given amino acid chain in Da
+        """
+        m = 0
+        for acid in str(self.seq):
+            m += self.masses[acid]
+        return m
+
+class NucleicAcidSequence(BiologicalSequence):
+    def __init__(self, seq):
+        super().__init__(seq)
+        self.check_alphabet()
+
+    def gc_content(self) -> float:
+        """
+        Function counts GC-content in sequence, and returns result in %
+        """
+        n = 0
+        for nucl in self.seq:
+            if nucl == 'c' or nucl == 'g' or nucl == 'C' or nucl == 'G':
+                n += 1
+        return 100 * n / len(self.seq)
+
+    def complement(self):
+        """
+        Function return complement sequence
+        """
+        complementary_dna = self.seq.maketrans(self.dict_comp)
+        res = self.seq.translate(complementary_dna)
+        return NucleicAcidSequence(res)
+
+class DNASequence(BiologicalSequence):
+    alphabet = {'A', 'g', 't', 'G', 'T', 'a', 'c', 'C'}
+    dict_trans = {'A': 'A', 'C': 'C', 'T': 'U', 'G': 'G', 'a': 'a', 'c': 'c', 't': 'u', 'g': 'g'}
+    dict_comp = {'A': 'T', 'C': 'G', 'T': 'A', 'G': 'C', 'a': 't', 'c': 'g', 't': 'a', 'g': 'c'}
+    def __init__(self, seq):
+        super().__init__(seq)
 
 
-def amino_acid_tools(*args: str) -> list | int | float | str :
-    """
-    Performs functions for working with protein sequences.
+    def transcribe(self):
+        """
+        Function return transcript of DNA sequence
+        """
+        transcribe = self.seq.maketrans(self.dict_trans)
+        res = self.seq.translate(transcribe)
 
-        Parameters:
-            The function must accept an unlimited number of protein sequences (str) as input,
-            the last  variable must be the function (str) you want to execute.
-            The amino acid sequence can consist of both uppercase and lowercase letters.
-        Input example:
-            amino_acid_tools('PLPKVEL','VDviRIkLQ','PPDFGKT','folding')
-        Function:
-            molecular_weight: calculates molecular weight of the amino acid chain
-            three_letter_code: converts single letter translations to three letter translations
-            length: counts the number of amino acids in the given sequence
-            folding: counts the number of amino acids characteristic separately for alpha helixes and beta sheets,
-                    and gives out what will be the structure of the protein more
-            seq_charge: evaluates the overall charge of the aminoacid chain in neutral aqueous solution (pH = 7)
-
-        Returns:
-            If one sequence is supplied, a string with the result is returned.
-            If several are submitted, a list of strings is returned.
-            Depending on the function performed, the following returns will occur:
-                molecular_weight (int) or (list): amino acid sequence molecular weight number or list of numbers
-                three_letter_code (str) or (list): translated sequence from one-letter in three-letter code
-                length (int) or (list): integer number of amino acid residues
-                folding (str) or (list): 'alpha_helix', if there are more alpha helices
-                                        'beta_sheet', if there are more beta sheets
-                                        'equally', if the probability of alpha spirals and beta sheets are the same
-                seq_charge(str) or (list): "positive", "negative" or "neutral"
-            If seq contains symbols differ from IUPAC 1letter code for 22 proteinogenic amino acids,
-            the result for this sequence will be 'unexpected symbols in sequence' regardless of function
-            If action is not in the function the message 'unexpected action' will occur
-    """
-    *seqs, function = args
-    d_of_functions = {'molecular_weight': aa.molecular_weight,
-                      'three_letter_code': aa.three_letter_code,
-                      'length': aa.length,
-                      'folding': aa.folding,
-                      'seq_charge': aa.seq_charge}
-    answer = []
-    if function not in d_of_functions.keys():
-        raise ValueError("unexpected action")
-    for sequence in seqs:
-        if not set(sequence).issubset(AMINO_ACIDS):
-            answer.append('unexpected symbols in sequence')
-        else:
-            answer.append(d_of_functions[function](sequence))
-    if len(answer) == 1:
-        return answer[0]
-    else:
-        return answer
+        return RNASequence(res)
 
 
+class RNASequence(BiologicalSequence):
+    alphabet = {'U', 'A', 'g', 'G', 'a', 'c', 'C', 'u'}
+    dict_comp = {'A': 'U', 'C': 'G', 'U': 'A', 'G': 'C', 'a': 'u', 'c': 'g', 'u': 'a', 'g': 'c'}
+    def __init__(self, seq):
+        super().__init__(seq)
+
+
+ #фильтратор
 def filter_gc(records, gc_bounds_both_side=(0, 100)) -> list:
     """
     This function selects sequences with the GC content of your interest
@@ -131,7 +117,6 @@ def filter_gc(records, gc_bounds_both_side=(0, 100)) -> list:
             new_records.append(record)
 
     return new_records
-
 
 
 def filter_length(records, length_bounds_both_side=(0, 2 ** 32)) -> list:
